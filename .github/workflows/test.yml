@@ -1,0 +1,34 @@
+name: Test Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  push-git-tag:
+    name: Push Git Tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create and Push Tag
+        run: |
+          tag="test-2"
+          git config --global --add safe.directory "$(pwd)"
+          msg=$(git log -1 --pretty=%B)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a $tag -m "Release $tag"
+          git push origin $tag
+          export GH_TOKEN=${{ github.token }}
+          gh release create $tag --title "Release $tag" --notes "$msg"
+
+          touch test.txt
+          git add test.txt
+          git commit -m "Add test file"
+          git push origin main
